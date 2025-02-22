@@ -1,5 +1,5 @@
 [
-  {"name":"Acerca de:", "command":"System of commands in english oriented to BIM"},    
+  {"name":"About:", "command":"System of commands in english oriented to BIM"},    
   {"name":"Add (Arch)","command":"Arch_Add"},
   {"name":"Axis (Arch)","command":"Arch_Axis"},
   {"name":"AxisSystem (Arch)","command":"Arch_AxisSystem"},
