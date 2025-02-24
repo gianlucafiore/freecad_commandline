@@ -8,7 +8,7 @@ import os
 import json
 import unicodedata
 import difflib
-
+commands_used = []
 class CommandBar(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -62,21 +62,24 @@ class CommandBar(QWidget):
         """Filtra y ordena sugerencias por coincidencia aproximada"""
         user_input = self.normalize(self.command_input.text().strip())
 
-        if not user_input:
-            self.command_list.setVisible(False)
-            return
+        if user_input:
+            matches = sorted(
+                self.command_names,
+                key=lambda name: difflib.SequenceMatcher(None, user_input, self.normalize(name)).ratio(),
+                reverse=True
+            )
 
-        matches = sorted(
-            self.command_names,
-            key=lambda name: difflib.SequenceMatcher(None, user_input, self.normalize(name)).ratio(),
-            reverse=True
-        )
+            self.command_list.clear()
+            for match in matches[:10]:  # Limitar a las 10 mejores coincidencias
+                self.command_list.addItem(QListWidgetItem(match))
 
-        self.command_list.clear()
-        for match in matches[:10]:  # Limitar a las 10 mejores coincidencias
-            self.command_list.addItem(QListWidgetItem(match))
+            self.command_list.setVisible(bool(matches))
+        else:
+            self.command_list.setVisible(True)
+            self.command_list.clear()
+            for command_used in commands_used:
+                self.command_list.addItem(QListWidgetItem(command_used))
 
-        self.command_list.setVisible(bool(matches))
 
     def eventFilter(self, obj, event):
         """Captura teclas globalmente en FreeCAD"""
@@ -86,11 +89,10 @@ class CommandBar(QWidget):
             if key == Qt.Key_Escape:
                 if not self.command_input.hasFocus():
                     self.command_input.setFocus()  # Enfocar si está desenfocada
-                elif self.command_input.text():
+                else :
                     self.command_input.clear()  # Borrar texto y cerrar sugerencias
                     self.command_list.setVisible(False)
-                else:
-                    self.command_input.clearFocus()  # Desenfocar si ya está vacía
+                    self.command_input.clearFocus() 
                 return True
 
             # Enter: Ejecuta el comando seleccionado o el tipeado
@@ -99,6 +101,7 @@ class CommandBar(QWidget):
                     self.select_command(self.command_list.currentItem())  # Selecciona y ejecuta
                 else:
                     self.execute_command()  # Ejecuta lo tipeado
+                    self.command_list.setVisible(False)
                 return True
 
             # Backspace: Funciona normalmente
@@ -125,9 +128,16 @@ class CommandBar(QWidget):
         return super().eventFilter(obj, event)
 
     def select_command(self, item):
-        """Selecciona el comando de la lista y lo ejecuta"""
+        """Selecciona el comando de la lista, lo coloca en el textbox y lo ejecuta"""
         if item:
+            if item.text() in commands_used:
+                commands_used.remove(item.text())
+            commands_used.reverse()
+            commands_used.append(item.text())
+            commands_used.reverse()
+            del commands_used[4:]
             self.command_input.setText(item.text())
+            print(commands_used)
             self.execute_command()
 
     def execute_command(self):
@@ -138,25 +148,15 @@ class CommandBar(QWidget):
         if selected_command:
             try:
                 FreeCADGui.runCommand(selected_command)
-                self.console_output.append(f"Executing command: {selected_command}")  # Mostrar en consola
+                #se colocan los ultimos comandos al principio de la lista de la consola
+                self.console_output.setPlainText(f"Executing command: {selected_command}\n" + self.console_output.toPlainText())
                 self.command_input.clear()
                 self.command_list.setVisible(False)
-            except Exception as e:
-                self.console_output.append(f"Error on exec. {selected_command}: {e}")  # Mostrar en consola
-        else:
-            self.console_output.append(f"Command not found: {input_command}")  # Mostrar en consola
+            except Exception as e: 
+                self.console_output.setPlainText(f"Error on exec. {selected_command}: {e}\n" + self.console_output.toPlainText())
+        else: 
+            self.console_output.setPlainText(f"Command not found: {input_command}\n" + self.console_output.toPlainText())
 
-    def show_console(self):
-        """Muestra la consola y pone foco en la barra de comandos"""
-        self.command_input.setFocus()
-        self.show()
-        self.is_console_visible = True
-
-    def hide_console(self):
-        """Cierra la consola"""
-        self.command_input.clear()
-        self.hide()
-        self.is_console_visible = False
 
 def show_command_bar():
     """Muestra la barra de comandos como un dock en FreeCAD"""
