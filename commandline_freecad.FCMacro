@@ -35,7 +35,8 @@ class CommandBar(QWidget):
         self.layout.addWidget(self.console_output)  # Consola de salida
         self.setLayout(self.layout)
 
-        self.commands = self.load_commands_from_json("commands.json")
+        #self.commands = self.load_commands_from_json("commands.json")
+        self.commands = self.get_commands_context()
         self.command_names = [item["name"] for item in self.commands]
 
         self.command_input.textChanged.connect(self.update_suggestions)
@@ -43,15 +44,35 @@ class CommandBar(QWidget):
 
         FreeCADGui.getMainWindow().installEventFilter(self)
         self.is_console_visible = False  # Estado de visibilidad de la consola
+    
+    def get_commands_context(self):
+        all_commands = []
+        commands = FreeCADGui.listCommands()  # Obtener la lista de comandos
+        for cmd_name in commands:
+            cmd = FreeCADGui.Command.get(cmd_name)  # Obtener el objeto del comando
+            if cmd:
+                actions = cmd.getAction()  # Obtener la acción asociada (puede ser una lista)
+                if actions:
+                    if isinstance(actions, list):  # Si devuelve una lista, tomamos la primera acción
+                        action = actions[0] if actions else None
+                    else:
+                        action = actions  # Si devuelve una sola acción, la usamos directamente
+                    
+                    if action:
+                        menu_text = action.text()  # Obtener el nombre visible en la GUI
+                        #print(f"{cmd_name}: {menu_text}")  # Mostrar el nombre interno y visible
+                        all_commands.append({"name": f"{menu_text.translate({ord('&'): None})} ({cmd_name.split('_')[0]})","command":cmd_name})
 
-    def load_commands_from_json(self, filename):
-        """Carga comandos desde JSON"""
-        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
+        return all_commands
+
+    # def load_commands_from_json(self, filename):
+    #     """Carga comandos desde JSON"""
+    #     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+    #     try:
+    #         with open(filepath, "r", encoding="utf-8") as f:
+    #             return json.load(f)
+    #     except (FileNotFoundError, json.JSONDecodeError):
+    #         return []
 
     def normalize(self, text):
         """Elimina tildes y pasa a minúsculas"""
