@@ -118,6 +118,8 @@ class CommandBar(QWidget):
                     prev_index = (self.command_list.currentRow() - 1) % self.command_list.count()
                     self.command_list.setCurrentRow(prev_index)
                     return True
+            else:
+                self.command_list.setVisible(True)
 
             # Redirige el tipeo al campo de comandos
             if event.text().strip():
