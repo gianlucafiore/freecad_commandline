@@ -1,0 +1,173 @@
+import FreeCADGui
+from PySide2.QtWidgets import (
+    QLineEdit, QVBoxLayout, QWidget, QDockWidget, QListWidget, QListWidgetItem, QTextEdit
+) 
+
+from PySide2.QtCore import Qt, QEvent
+import os
+import json
+import unicodedata
+import difflib
+commands_used = []
+class CommandBar(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.layout = QVBoxLayout()
+        
+        # Cuadro de texto para ingresar comandos
+        self.command_input = QLineEdit(self)
+        self.command_input.setPlaceholderText("Type a command...")
+        
+        # Lista de sugerencias de comandos
+        self.command_list = QListWidget(self)
+        self.command_list.setVisible(False)
+        self.command_list.itemActivated.connect(self.select_command)
+
+        # Consola de salida para mostrar los comandos ejecutados
+        self.console_output = QTextEdit(self)
+        self.console_output.setReadOnly(True)
+        self.console_output.setStyleSheet("background-color: #313651; color: white; font-family: Consolas;")
+        
+        # Agregar el input de comando y la consola al layout
+        self.layout.addWidget(self.command_input)
+        self.layout.addWidget(self.command_list)
+        self.layout.addWidget(self.console_output)  # Consola de salida
+        self.setLayout(self.layout)
+
+        self.commands = self.load_commands_from_json("commands.json")
+        self.command_names = [item["name"] for item in self.commands]
+
+        self.command_input.textChanged.connect(self.update_suggestions)
+        self.command_input.installEventFilter(self)
+
+        FreeCADGui.getMainWindow().installEventFilter(self)
+        self.is_console_visible = False  # Estado de visibilidad de la consola
+
+    def load_commands_from_json(self, filename):
+        """Carga comandos desde JSON"""
+        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+
+    def normalize(self, text):
+        """Elimina tildes y pasa a minúsculas"""
+        text = text.lower()
+        return ''.join(c for c in unicodedata.normalize('NFKD', text) if not unicodedata.combining(c))
+
+    def update_suggestions(self):
+        """Filtra y ordena sugerencias por coincidencia aproximada"""
+        user_input = self.normalize(self.command_input.text().strip())
+
+        if user_input:
+            matches = sorted(
+                self.command_names,
+                key=lambda name: difflib.SequenceMatcher(None, user_input, self.normalize(name)).ratio(),
+                reverse=True
+            )
+
+            self.command_list.clear()
+            for match in matches[:10]:  # Limitar a las 10 mejores coincidencias
+                self.command_list.addItem(QListWidgetItem(match))
+
+            self.command_list.setVisible(bool(matches))
+        else:
+            self.command_list.setVisible(True)
+            self.command_list.clear()
+            for command_used in commands_used:
+                self.command_list.addItem(QListWidgetItem(command_used))
+
+
+    def eventFilter(self, obj, event):
+        """Captura teclas globalmente en FreeCAD"""
+        if event.type() == QEvent.KeyPress:
+            key = event.key()
+
+            if key == Qt.Key_Escape:
+                if not self.command_input.hasFocus():
+                    self.command_input.setFocus()  # Enfocar si está desenfocada
+                else :
+                    self.command_input.clear()  # Borrar texto y cerrar sugerencias
+                    self.command_list.setVisible(False)
+                    self.command_input.clearFocus() 
+                return True
+
+            # Enter: Ejecuta el comando seleccionado o el tipeado
+            elif key == Qt.Key_Return or key == Qt.Key_Enter:
+                if self.command_list.isVisible() and self.command_list.currentItem():
+                    self.select_command(self.command_list.currentItem())  # Selecciona y ejecuta
+                else:
+                    self.execute_command()  # Ejecuta lo tipeado
+                    self.command_list.setVisible(False)
+                return True
+
+            # Backspace: Funciona normalmente
+            elif key == Qt.Key_Backspace:
+                return False  # Permite el comportamiento normal
+
+            # Navegación en la lista
+            if self.command_list.isVisible():
+                if key == Qt.Key_Down:
+                    next_index = (self.command_list.currentRow() + 1) % self.command_list.count()
+                    self.command_list.setCurrentRow(next_index)
+                    return True
+                elif key == Qt.Key_Up:
+                    prev_index = (self.command_list.currentRow() - 1) % self.command_list.count()
+                    self.command_list.setCurrentRow(prev_index)
+                    return True
+
+            # Redirige el tipeo al campo de comandos
+            if event.text().strip():
+                self.command_input.setFocus()
+                self.command_input.insert(event.text())
+                return True
+
+        return super().eventFilter(obj, event)
+
+    def select_command(self, item):
+        """Selecciona el comando de la lista, lo coloca en el textbox y lo ejecuta"""
+        if item:
+            if item.text() in commands_used:
+                commands_used.remove(item.text())
+            commands_used.reverse()
+            commands_used.append(item.text())
+            commands_used.reverse()
+            del commands_used[4:]
+            self.command_input.setText(item.text())
+            print(commands_used)
+            self.execute_command()
+
+    def execute_command(self):
+        """Ejecuta el comando seleccionado y muestra la consola"""
+        input_command = self.command_input.text().strip()
+        selected_command = next((item["command"] for item in self.commands if item["name"] == input_command), None)
+
+        if selected_command:
+            try:
+                FreeCADGui.runCommand(selected_command)
+                #se colocan los ultimos comandos al principio de la lista de la consola
+                self.console_output.setPlainText(f"Executing command: {selected_command}\n" + self.console_output.toPlainText())
+                self.command_input.clear()
+                self.command_list.setVisible(False)
+            except Exception as e: 
+                self.console_output.setPlainText(f"Error on exec. {selected_command}: {e}\n" + self.console_output.toPlainText())
+        else: 
+            self.console_output.setPlainText(f"Command not found: {input_command}\n" + self.console_output.toPlainText())
+
+
+def show_command_bar():
+    """Muestra la barra de comandos como un dock en FreeCAD"""
+    # Buscar si ya existe el dock para no duplicarlo
+     
+    main_window = FreeCADGui.getMainWindow()
+    dock = QDockWidget("Commandline bar", main_window)
+    dock.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea | Qt.RightDockWidgetArea )
+
+    command_bar = CommandBar()
+    dock.setWidget(command_bar)
+    main_window.addDockWidget(Qt.RightDockWidgetArea, dock)
+
+show_command_bar()
