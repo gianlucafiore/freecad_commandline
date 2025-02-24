@@ -8,6 +8,7 @@ In order for us to build something big with this, it would be ideal for those wh
 
 ### To use it:
 - Run the macro
-- Press the Esc key: this will always focus the text box as many times as you want to type the name of the command globally, the only thing that intervenes when using freecad by default is that it does not deselect all the elements.
+- Press the Esc key: this will always focus the text box whenever you want to type the command name globally, the only thing that intervenes when using freecad by default is that it does not deselect all the elements.
 - Type the approximate name of the required command
 - You can navigate with the up and down arrows until you find the desired one, then press enter. The command is executed
+- In case you want to reuse the used commands, without typing any suggestion you can press the down arrow, and the last 4 used commands will appear
