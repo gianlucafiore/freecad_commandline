@@ -3,7 +3,10 @@ Making the dream of many come true. Command line
 
 ### Installing this plugin is as simple as downloading the file .FCMacro from this repo, placing them in your freecad macros folder, and running it.
 
-With these new improvements now, commands will be taken from the workbench that has been opened in freecad, if you have configured by default that the workbenches you use are pasted when starting the program, all the commands from those workbenches will appear
+I definitely decided that the translated command file was the best option, so I didn't have to load each workbench to have all the commands available in freecad.
+Again the installation method is:
+- Download the .FCMacro file and the commands.json file from the folder of the required language
+- Place both files in the freecad macros folder or your preferred folder
 
 ### To use it:
 - Run the macro
