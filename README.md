@@ -14,3 +14,30 @@ Again the installation method is:
 - Write the approximate name of the required command
 - You can navigate with the up and down arrows until you find the desired one, then press enter. The command is executed
 - If you want to reuse the commands used, without typing any suggestion you can press the down arrow, and the last 4 commands used will appear
+
+
+### To contibute it:
+
+Execute this command in python console:
+
+```
+all_commands = []
+commands = FreeCADGui.listCommands() 
+for cmd_name in commands:
+    cmd = FreeCADGui.Command.get(cmd_name)  
+    if cmd:
+        actions = cmd.getAction()  
+        if actions:
+            if isinstance(actions, list):  
+                action = actions[0] if actions else None
+            else:
+                action = actions  
+            
+            if action:
+                menu_text = action.text()  
+                print('{'+f'"type":"{cmd_name.split("_")[0]}","command":"{cmd_name}", "name":"{menu_text.translate({ord("&"): None})} ({cmd_name.split("_")[0]})"'+'},')  
+                all_commands.append({"name": f"{menu_text.translate({ord('&'): None})} ({cmd_name.split('_')[0]})","command":cmd_name})```
+
+
+Make a new json file with the output and set name "commands.json" in new folder of your language.
+publish your language by making a pull request.
