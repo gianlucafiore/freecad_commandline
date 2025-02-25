@@ -18,7 +18,7 @@ Again the installation method is:
 
 ### To contibute it:
 
-Execute this command in python console:
+Execute this command in python console with all workbenches pre-loaded:
 
 ```
 all_commands = []
