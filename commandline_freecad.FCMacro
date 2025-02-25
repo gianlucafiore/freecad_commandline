@@ -35,8 +35,8 @@ class CommandBar(QWidget):
         self.layout.addWidget(self.console_output)  # Consola de salida
         self.setLayout(self.layout)
 
-        #self.commands = self.load_commands_from_json("commands.json")
-        self.commands = self.get_commands_context()
+        self.commands = self.load_commands_from_json("commands.json")
+        #self.commands = self.get_commands_context()
         self.command_names = [item["name"] for item in self.commands]
 
         self.command_input.textChanged.connect(self.update_suggestions)
@@ -45,7 +45,7 @@ class CommandBar(QWidget):
         FreeCADGui.getMainWindow().installEventFilter(self)
         self.is_console_visible = False  # Estado de visibilidad de la consola
     
-    def get_commands_context(self):
+    '''def get_commands_context(self):
         all_commands = []
         commands = FreeCADGui.listCommands()  # Obtener la lista de comandos
         for cmd_name in commands:
@@ -63,16 +63,16 @@ class CommandBar(QWidget):
                         #print(f"{cmd_name}: {menu_text}")  # Mostrar el nombre interno y visible
                         all_commands.append({"name": f"{menu_text.translate({ord('&'): None})} ({cmd_name.split('_')[0]})","command":cmd_name})
 
-        return all_commands
+        return all_commands'''
 
-    # def load_commands_from_json(self, filename):
-    #     """Carga comandos desde JSON"""
-    #     filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
-    #     try:
-    #         with open(filepath, "r", encoding="utf-8") as f:
-    #             return json.load(f)
-    #     except (FileNotFoundError, json.JSONDecodeError):
-    #         return []
+    def load_commands_from_json(self, filename):
+        """Carga comandos desde JSON"""
+        filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
 
     def normalize(self, text):
         """Elimina tildes y pasa a minúsculas"""
