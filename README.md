@@ -10,5 +10,6 @@ Making the dream of many come true. Command line
 - Write the approximate name of the required command
 - You can navigate with the up and down arrows until you find the desired one, then press enter. The command is executed
 - If you want to reuse the commands used, without typing any suggestion you can press the down arrow, and the last 4 commands used will appear
+- If there are missing commands, they will be added as you open different non-preloaded workbenches
 
 
