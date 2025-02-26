@@ -79,27 +79,6 @@ class CommandBar(QWidget):
         text = text.lower()
         return ''.join(c for c in unicodedata.normalize('NFKD', text) if not unicodedata.combining(c))
 
-    # def update_suggestions(self):
-    #     """Filtra y ordena sugerencias por coincidencia aproximada"""
-    #     user_input = self.normalize(self.command_input.text().strip())
-
-    #     if user_input:
-    #         matches = sorted(
-    #             self.command_names,
-    #             key=lambda name: difflib.SequenceMatcher(None, user_input, self.normalize(name)).ratio(),
-    #             reverse=True
-    #         )
-
-    #         self.command_list.clear()
-    #         for match in matches[:10]:  # Limitar a las 10 mejores coincidencias
-    #             self.command_list.addItem(QListWidgetItem(match))
-
-    #         self.command_list.setVisible(bool(matches))
-    #     else:
-    #         self.command_list.setVisible(True)
-    #         self.command_list.clear()
-    #         for command_used in commands_used:
-    #             self.command_list.addItem(QListWidgetItem(command_used))
     def update_suggestions(self):
         """Filtra y ordena sugerencias por coincidencia aproximada, actualizando la lista de comandos dinámicamente."""
         user_input = self.normalize(self.command_input.text().strip())
@@ -207,6 +186,7 @@ class CommandBar(QWidget):
                 self.console_output.setPlainText(f"Executing command: {selected_command}\n" + self.console_output.toPlainText())
                 self.command_input.clear()
                 self.command_list.setVisible(False)
+                self.command_input.clearFocus()
             except Exception as e: 
                 self.console_output.setPlainText(f"Error on exec. {selected_command}: {e}\n" + self.console_output.toPlainText())
         else: 
