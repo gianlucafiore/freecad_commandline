@@ -1,7 +1,7 @@
 # freecad_commandline
 Making the dream of many come true. Command line
 
-### Installing this plugin is as simple as downloading the file .FCMacro from this repo, placing them in your freecad macros folder, and running it.
+### Installing this plugin is as simple as downloading the file .FCMacro from this repo, placing that in your freecad macros folder, and running it.
 
 
 ### To use it:
